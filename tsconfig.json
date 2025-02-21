@@ -5,6 +5,12 @@
   "references": [
     {
       "path": "./packages/core"
+    },
+    {
+      "path": "./apps/fe-react"
+    },
+    {
+      "path": "./apps/be-nest"
     }
   ]
 }
