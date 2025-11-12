@@ -7,6 +7,8 @@ import { ApiService } from '../core/api.service';
 export class RemoteService {
   private readonly apiService = inject(ApiService);
 
-  constructor() { }
+  public getMagnetLink$(name: string) {
+    return this.apiService.get$(`api/torrents/${name}`)
+  }
 
 }

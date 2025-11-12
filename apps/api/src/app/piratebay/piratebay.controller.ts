@@ -13,7 +13,10 @@ export class PirateBayController {
     const torrent = this.pirateBayService.sortBySeeders(
       this.pirateBayService.filterBySeeders(result, 10)
     )[0];
-    return this.pirateBayService.generateMagnetLink(torrent)
+
+    return {
+      magnet: this.pirateBayService.generateMagnetLink(torrent)
+    }
 
   }
 }
