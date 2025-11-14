@@ -1,13 +1,13 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { PirateBayService } from './piratebay.service';
-import WebTorrent from 'webtorrent';
+import { TorrentService } from './webtorrent.service';
 
 @Controller('torrents')
 export class PirateBayController {
-  private client = new WebTorrent();
 
   constructor(
     private readonly pirateBayService: PirateBayService,
+    private readonly torrentService: TorrentService,
   ) { }
 
   @Get(':name')
@@ -17,12 +17,9 @@ export class PirateBayController {
       this.pirateBayService.filterBySeeders(result, 10)
     )[0];
 
+
     const link = this.pirateBayService.generateMagnetLink(torrent);
-    this.client.add(link, { path: '/home/dani/Documents/Media/Downloads' }, function (torrent) {
-      torrent.on('done', function () {
-        return 'torrent download finished'
-      })
-    })
+    return this.torrentService.downloadTorrent(link);
 
   }
 }
