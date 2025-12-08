@@ -1,0 +1,1 @@
+export const API_TMDB_GENRES = 'genre/movie/list';
