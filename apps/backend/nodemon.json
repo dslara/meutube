@@ -1,0 +1,6 @@
+{
+  "watch": ["../../packages/ui/dist"],
+  "ext": "ts,js,tsx,jsx",
+  "ignore": ["src/**/*.spec.ts"],
+  "exec": "nest start --watch"
+}

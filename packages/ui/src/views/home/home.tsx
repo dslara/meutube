@@ -7,7 +7,6 @@ interface HomeProps {
 export const Home = (props: HomeProps) => {
   return (
     <Main title={props.title}>
-      <h1 className="text-3xl font-bold mb-6">Página Inicial</h1>
 
       <div x-data="{ showForm: false }">
         <button 
