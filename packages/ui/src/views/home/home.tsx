@@ -8,10 +8,10 @@ export const Home = (props: HomeProps) => {
   return (
     <Main title={props.title}>
       <h1 className="text-3xl font-bold mb-6">Página Inicial</h1>
-      
+
       <div x-data="{ showForm: false }">
         <button 
-          className="bg-purple-500 text-white p-2 rounded"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           onClick={() => { /* Alpine.js irá capturar o evento */ }}
           x-on:click="showForm = !showForm"
         >

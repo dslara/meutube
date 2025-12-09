@@ -5,8 +5,11 @@
   "types": "./dist/index.d.ts",
   "license": "MIT",
   "scripts": {
-    "dev": "npm run build --watch",
-    "build": "tsc -p tsconfig.json"
+    "dev": "concurrently \"npm:watch:css\" \"npm:start\"",
+    "start": "tsc --watch",
+    "build": "tsc",
+    "build:css": "npx @tailwindcss/cli -i ./src/styles/input.css -o ../../apps/backend/public/output.css --minify",
+    "watch:css": "npm run build:css --watch"
   },
   "dependencies": {
     "react": "^19.2.1"
@@ -14,6 +17,8 @@
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
-    "@types/react": "19.2.2"
+    "@tailwindcss/cli": "^4.1.17",
+    "@types/react": "19.2.2",
+    "concurrently": "^9.2.1"
   }
 }

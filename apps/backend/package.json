@@ -6,11 +6,8 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "concurrently \"npm:build:css:watch\" \"npm:start\"",
+    "dev": "nest start --watch",
     "build": "nest build",
-    "start": "nest start --watch",
-    "build:css": "npx @tailwindcss/cli -i ./styles/input.css -o ./public/output.css --minify",
-    "build:css:watch": "npx @tailwindcss/cli -i ./styles/input.css -o ./public/output.css --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "test": "jest",
@@ -31,7 +28,9 @@
     "react-dom": "^19.2.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "ui": "*"
+    "ui": "*",
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -39,7 +38,6 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
-    "@tailwindcss/cli": "^4.1.17",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
