@@ -12,12 +12,14 @@
     "watch:css": "npm run build:css --watch"
   },
   "dependencies": {
+    "alpinejs": "^3.15.2",
     "react": "^19.2.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "@tailwindcss/cli": "^4.1.17",
+    "@types/alpinejs": "^3.13.11",
     "@types/react": "19.2.2",
     "concurrently": "^9.2.1"
   }

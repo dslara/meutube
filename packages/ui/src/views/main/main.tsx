@@ -16,7 +16,7 @@ export const Main = ({ title, children }: LayoutProps) => {
         <link rel="stylesheet" href="/public/output.css" />
       </head>
       <body>
-        <div className="container mx-auto p-4">
+        <div className="p-4">
           {children}
         </div>
       </body>

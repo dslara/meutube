@@ -1,9 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import dotenv from "dotenv"
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { join } from 'path';
-dotenv.config()
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(

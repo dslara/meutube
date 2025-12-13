@@ -1,2 +1,3 @@
-export { Home } from './views/home/home';
-export { Main } from './views/main/main';
+export * from './components/components.api';
+export * from './forms/forms.api';
+export * from './views/views.api';

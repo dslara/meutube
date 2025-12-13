@@ -1,30 +1,30 @@
+import { Checkbox, Form } from '../../forms/forms.api';
 import { Main } from '../main/main';
 
-interface HomeProps {
+export interface HomeProps {
   title: string;
+  generes: { value: string; label: string }[];
 }
 
-export const Home = (props: HomeProps) => {
+export const Home = ({ generes, title }: HomeProps) => {
+  const filters = generes.map(({ value, label }) => (
+    <Checkbox 
+      key={value}
+      name='with_genres'
+      label={label}
+      model={{ value }}
+    />
+  ));
   return (
-    <Main title={props.title}>
-
-      <div x-data="{ showForm: false }">
-        <button 
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => { /* Alpine.js irá capturar o evento */ }}
-          x-on:click="showForm = !showForm"
-        >
-          Toggle Formulário (Alpine)
-        </button>
-
-        <div x-show="showForm" className="mt-4 p-4 border border-gray-300 rounded" style={{ display: 'none' }}>
-            <h3 className="text-xl mb-3">Novo Conteúdo</h3>
-            
-            <div id="result-message" className="mt-4 text-sm text-blue-600">
-                Aguardando submissão...
-            </div>
-        </div>
+    <Main title={title}>
+      <Form elements={filters} url='web/results' target='#content' />
+      <div
+        hx-post="web/results"
+        hx-target="#content"
+        hx-swap="innerHTML"
+        hx-trigger="load once">
       </div>
+      <div id="content"></div>
     </Main>
   );
 };
