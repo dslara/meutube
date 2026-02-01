@@ -3,7 +3,12 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { API_TMDB_GENRES, API_TMDB_DISCOVER_MOVIE } from './tmdb.constants';
 import { TMDB_ACCESS_TOKEN, TMDB_API_URL } from '../core/environment';
-import { Genre, GenresResponse, DiscoverMovieQueryParams, DiscoverMoviesResponse } from './tmdb.models';
+import {
+  Genre,
+  GenresResponse,
+  DiscoverMovieQueryParams,
+  DiscoverMoviesResponse,
+} from './tmdb.models';
 
 @Injectable()
 export class TmdbService {
@@ -18,23 +23,33 @@ export class TmdbService {
 
   async getGenres(params?: Record<string, any>): Promise<Genre[]> {
     try {
-      return (await firstValueFrom(
-        this.httpService.get<GenresResponse>(`${this.apiUrl}/${API_TMDB_GENRES}`, { params, headers: this.headers }),
-      )).data.genres;
-
+      return (
+        await firstValueFrom(
+          this.httpService.get<GenresResponse>(
+            `${this.apiUrl}/${API_TMDB_GENRES}`,
+            { params, headers: this.headers },
+          ),
+        )
+      ).data.genres;
     } catch (err) {
       this.logger.error('Failed to fetch genres from TMDB', err as any);
       throw err;
     }
   }
 
-  async discoverMovies(params?: DiscoverMovieQueryParams): Promise<DiscoverMoviesResponse> {
+  async discoverMovies(
+    params?: DiscoverMovieQueryParams,
+  ): Promise<DiscoverMoviesResponse> {
     try {
       const endpoint = `${this.apiUrl}/${API_TMDB_DISCOVER_MOVIE}`;
-      return (await firstValueFrom(
-        this.httpService.get<DiscoverMoviesResponse>(endpoint, { params, headers: this.headers }),
-      )).data;
-
+      return (
+        await firstValueFrom(
+          this.httpService.get<DiscoverMoviesResponse>(endpoint, {
+            params,
+            headers: this.headers,
+          }),
+        )
+      ).data;
     } catch (err) {
       this.logger.error('Failed to discover movies from TMDB', err as any);
       throw err;

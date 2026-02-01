@@ -3,7 +3,7 @@ import { TmdbService } from './tmdb.service';
 
 @Controller('tmdb')
 export class TmdbController {
-  constructor(private readonly tmdbService: TmdbService) { }
+  constructor(private readonly tmdbService: TmdbService) {}
 
   @Get('genres')
   async getGenres(@Query() query: Record<string, any>) {
