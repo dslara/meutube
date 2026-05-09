@@ -2,7 +2,11 @@
   "extends": "../typescript-config/base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "types": ["node"],
+    "module": "ESNext",
+    "moduleResolution": "bundler"
   },
-  "include": ["./src"]
+  "include": ["./src"],
+  "exclude": ["**/__tests__/**", "**/*.test.ts"]
 }

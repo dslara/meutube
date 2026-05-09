@@ -2,7 +2,7 @@
   "name": "@meutube/torrent-lib",
   "version": "0.0.0",
   "main": "./src/index.ts",
-  "types": "dist/presentation/index.d.ts",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -10,26 +10,14 @@
   },
   "license": "MIT",
   "dependencies": {
-    "bittorrent-dht": "^11.0.11",
     "bittorrent-protocol": "^5.0.0",
     "bittorrent-tracker": "^11.2.2",
-    "chunk-store-stream": "^4.3.0",
-    "debug": "^4.4.3",
-    "fs-extra": "^11.3.5",
     "magnet-uri": "^7.0.7",
-    "parse-torrent": "^11.0.19",
-    "random-access-file": "^4.1.2",
-    "speed-limiter": "^1.0.2",
-    "thirty-two": "^1.0.2"
+    "parse-torrent": "^11.0.19"
   },
   "devDependencies": {
-    "@types/debug": "^4.1.13",
-    "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.2",
-    "@typescript-eslint/eslint-plugin": "^8.59.2",
-    "@typescript-eslint/parser": "^8.59.2",
-    "eslint": "^10.3.0",
     "jest": "^30.4.0",
     "ts-jest": "^29.4.9",
     "typescript": "^6.0.3"
