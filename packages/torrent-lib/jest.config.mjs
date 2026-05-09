@@ -13,5 +13,6 @@ export default {
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^bittorrent-tracker$': '<rootDir>/__mocks__/bittorrent-tracker.ts',
   },
 }
