@@ -10,3 +10,4 @@ export type {
 export { TorrentClient } from './torrent-client'
 export { Torrent } from './torrent'
 export { TypedEmitter } from './typed-emitter'
+export { DiskStorage } from './storage'
