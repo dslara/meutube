@@ -5,6 +5,7 @@ import { PeerManager } from './peer-manager'
 import { DiskStorage } from './storage'
 import { SequentialPiecePicker } from './piece-picker'
 import { join } from 'path'
+import { Readable } from 'stream'
 
 interface TorrentOptions {
   downloadDir: string
@@ -37,6 +38,7 @@ export class Torrent extends TypedEmitter<TorrentEvents> {
   private destroyed = false
   private discoveryStarted = false
   private speedWindow: { time: number; bytes: number }[] = []
+  private streams = new Set<Readable>()
 
   stats: TorrentStats = {
     downloaded: 0,
@@ -269,10 +271,84 @@ export class Torrent extends TypedEmitter<TorrentEvents> {
     this.stats.timeRemaining = 0
   }
 
+  createReadStream(range?: { start?: number; end?: number }): Readable {
+    if (!this.info || !this.storage) {
+      throw new Error('Metadata not available')
+    }
+
+    const start = Math.max(0, range?.start ?? 0)
+    const end = Math.min(this.info.length - 1, range?.end ?? this.info.length - 1)
+
+    if (start > end || start >= this.info.length) {
+      const empty = new Readable({ read() {} })
+      empty.push(null)
+      return empty
+    }
+
+    let offset = start
+    let filling = false
+
+    const stream = new Readable({
+      read() {
+        if (!filling && !stream.destroyed && offset <= end) {
+          fill().catch(err => stream.destroy(err))
+        }
+      },
+    })
+
+    const fill = async () => {
+      if (filling || stream.destroyed || offset > end) return
+      filling = true
+
+      try {
+        while (offset <= end && !stream.destroyed) {
+          const bytesInPiece = this.info!.pieceLength - (offset % this.info!.pieceLength)
+          const chunkSize = Math.min(64 * 1024, end - offset + 1, bytesInPiece)
+          const data = await this.storage!.read(offset, chunkSize)
+          offset += data.length
+          if (!stream.push(data)) {
+            break
+          }
+        }
+        if (offset > end && !stream.destroyed) {
+          stream.push(null)
+        }
+      } catch (err) {
+        if ((err as Error).message.includes('not available')) {
+          // Piece not yet downloaded, wait for next download event
+        } else {
+          stream.destroy(err as Error)
+        }
+      } finally {
+        filling = false
+      }
+    }
+
+    const onDownload = () => {
+      if (!filling && !stream.destroyed && offset <= end) {
+        fill().catch(err => stream.destroy(err))
+      }
+    }
+
+    this.on('download', onDownload)
+
+    stream.on('close', () => {
+      this.off('download', onDownload)
+      this.streams.delete(stream)
+    })
+
+    this.streams.add(stream)
+    return stream
+  }
+
   destroy(): void {
     if (this.destroyed) return
     this.destroyed = true
     this.stopSpeedTimer()
+    for (const stream of Array.from(this.streams)) {
+      stream.destroy()
+    }
+    this.streams.clear()
     this.peerManager.destroy()
     this.storage?.destroy()
   }

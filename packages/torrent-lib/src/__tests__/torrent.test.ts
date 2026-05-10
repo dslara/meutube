@@ -37,7 +37,7 @@ class MemoryStorage implements Storage {
       const pieceOffset = i * this.pieceLength
       const start = Math.max(0, offset - pieceOffset)
       const end = Math.min(piece.length, offset + length - pieceOffset)
-      piece.copy(buf, pieceOffset - offset, start, end)
+      piece.copy(buf, Math.max(0, pieceOffset - offset), start, end)
     }
     return buf
   }
@@ -336,6 +336,200 @@ describe('Torrent', () => {
 
       torrent.destroy()
       expect(peers.destroy).toHaveBeenCalled()
+    })
+  })
+
+  describe('createReadStream', () => {
+    test('throws if metadata not available', () => {
+      const torrent = createTorrent('magnet:?xt=urn:btih:abc123')
+      expect(() => torrent.createReadStream()).toThrow('Metadata not available')
+    })
+
+    test('reads full file after all pieces downloaded', async () => {
+      const parsed = makeParsedTorrent()
+      const piece0 = Buffer.from([1, 2, 3, 4])
+      const piece1 = Buffer.from([5, 6, 7, 8])
+      const pieceHashes = Buffer.concat([sha1(piece0), sha1(piece1)])
+
+      const torrent = createTorrent(Buffer.from('fake'), {
+        parseTorrent: jest.fn().mockResolvedValue({
+          ...parsed,
+          pieces: [sha1(piece0).toString('hex'), sha1(piece1).toString('hex')],
+        }),
+        createStorage: (info: TorrentInfo) => new MemoryStorage(info.pieceLength, pieceHashes),
+      })
+
+      await new Promise(r => setTimeout(r, 0))
+
+      peers.getUnchokedPeers.mockReturnValue(['127.0.0.1:6881'])
+      peers.emit('peer', '127.0.0.1:6881')
+      peers.emit('have', '127.0.0.1:6881', 0)
+      peers.emit('have', '127.0.0.1:6881', 1)
+      await new Promise(r => setTimeout(r, 0))
+      peers.emit('piece', '127.0.0.1:6881', 0, 0, piece0)
+      peers.emit('piece', '127.0.0.1:6881', 1, 0, piece1)
+      await new Promise(r => setTimeout(r, 0))
+
+      const stream = torrent.createReadStream()
+      const chunks: Buffer[] = []
+
+      const done = new Promise<void>((resolve, reject) => {
+        stream.on('end', resolve)
+        stream.on('error', reject)
+      })
+      stream.on('data', chunk => chunks.push(chunk))
+
+      await done
+      expect(Buffer.concat(chunks)).toEqual(Buffer.concat([piece0, piece1]))
+      torrent.destroy()
+    })
+
+    test('reads range of file', async () => {
+      const parsed = makeParsedTorrent()
+      const piece0 = Buffer.from([1, 2, 3, 4])
+      const piece1 = Buffer.from([5, 6, 7, 8])
+      const pieceHashes = Buffer.concat([sha1(piece0), sha1(piece1)])
+
+      const torrent = createTorrent(Buffer.from('fake'), {
+        parseTorrent: jest.fn().mockResolvedValue({
+          ...parsed,
+          pieces: [sha1(piece0).toString('hex'), sha1(piece1).toString('hex')],
+        }),
+        createStorage: (info: TorrentInfo) => new MemoryStorage(info.pieceLength, pieceHashes),
+      })
+
+      await new Promise(r => setTimeout(r, 0))
+
+      peers.getUnchokedPeers.mockReturnValue(['127.0.0.1:6881'])
+      peers.emit('peer', '127.0.0.1:6881')
+      peers.emit('have', '127.0.0.1:6881', 0)
+      peers.emit('have', '127.0.0.1:6881', 1)
+      await new Promise(r => setTimeout(r, 0))
+      peers.emit('piece', '127.0.0.1:6881', 0, 0, piece0)
+      peers.emit('piece', '127.0.0.1:6881', 1, 0, piece1)
+      await new Promise(r => setTimeout(r, 0))
+
+      const stream = torrent.createReadStream({ start: 2, end: 5 })
+      const chunks: Buffer[] = []
+
+      const done = new Promise<void>((resolve, reject) => {
+        stream.on('end', resolve)
+        stream.on('error', reject)
+      })
+      stream.on('data', chunk => chunks.push(chunk))
+
+      await done
+      expect(Buffer.concat(chunks)).toEqual(Buffer.from([3, 4, 5, 6]))
+      torrent.destroy()
+    })
+
+    test('waits for pieces during download', async () => {
+      const parsed = makeParsedTorrent()
+      const piece0 = Buffer.from([1, 2, 3, 4])
+      const piece1 = Buffer.from([5, 6, 7, 8])
+      const pieceHashes = Buffer.concat([sha1(piece0), sha1(piece1)])
+
+      const torrent = createTorrent(Buffer.from('fake'), {
+        parseTorrent: jest.fn().mockResolvedValue({
+          ...parsed,
+          pieces: [sha1(piece0).toString('hex'), sha1(piece1).toString('hex')],
+        }),
+        createStorage: (info: TorrentInfo) => new MemoryStorage(info.pieceLength, pieceHashes),
+      })
+
+      await new Promise(r => setTimeout(r, 0))
+
+      const stream = torrent.createReadStream()
+      const chunks: Buffer[] = []
+      const done = new Promise<void>((resolve, reject) => {
+        stream.on('end', resolve)
+        stream.on('error', reject)
+      })
+      stream.on('data', chunk => chunks.push(chunk))
+
+      // Emit piece 0
+      peers.getUnchokedPeers.mockReturnValue(['127.0.0.1:6881'])
+      peers.emit('peer', '127.0.0.1:6881')
+      peers.emit('have', '127.0.0.1:6881', 0)
+      await new Promise(r => setTimeout(r, 0))
+      peers.emit('piece', '127.0.0.1:6881', 0, 0, piece0)
+      await new Promise(r => setTimeout(r, 0))
+
+      expect(chunks.length).toBeGreaterThan(0)
+      const dataSoFar = Buffer.concat(chunks)
+      expect(dataSoFar.subarray(0, 4)).toEqual(piece0)
+
+      // Emit piece 1
+      peers.emit('have', '127.0.0.1:6881', 1)
+      await new Promise(r => setTimeout(r, 0))
+      peers.emit('piece', '127.0.0.1:6881', 1, 0, piece1)
+
+      await done
+      expect(Buffer.concat(chunks)).toEqual(Buffer.concat([piece0, piece1]))
+      torrent.destroy()
+    })
+
+    test('multiple streams can read simultaneously', async () => {
+      const parsed = makeParsedTorrent()
+      const piece0 = Buffer.from([1, 2, 3, 4])
+      const piece1 = Buffer.from([5, 6, 7, 8])
+      const pieceHashes = Buffer.concat([sha1(piece0), sha1(piece1)])
+
+      const torrent = createTorrent(Buffer.from('fake'), {
+        parseTorrent: jest.fn().mockResolvedValue({
+          ...parsed,
+          pieces: [sha1(piece0).toString('hex'), sha1(piece1).toString('hex')],
+        }),
+        createStorage: (info: TorrentInfo) => new MemoryStorage(info.pieceLength, pieceHashes),
+      })
+
+      await new Promise(r => setTimeout(r, 0))
+
+      peers.getUnchokedPeers.mockReturnValue(['127.0.0.1:6881'])
+      peers.emit('peer', '127.0.0.1:6881')
+      peers.emit('have', '127.0.0.1:6881', 0)
+      peers.emit('have', '127.0.0.1:6881', 1)
+      await new Promise(r => setTimeout(r, 0))
+      peers.emit('piece', '127.0.0.1:6881', 0, 0, piece0)
+      peers.emit('piece', '127.0.0.1:6881', 1, 0, piece1)
+      await new Promise(r => setTimeout(r, 0))
+
+      const stream1 = torrent.createReadStream()
+      const stream2 = torrent.createReadStream({ start: 2, end: 5 })
+
+      const chunks1: Buffer[] = []
+      const chunks2: Buffer[] = []
+
+      const done1 = new Promise<void>((resolve, reject) => {
+        stream1.on('end', resolve)
+        stream1.on('error', reject)
+      })
+      const done2 = new Promise<void>((resolve, reject) => {
+        stream2.on('end', resolve)
+        stream2.on('error', reject)
+      })
+      stream1.on('data', chunk => chunks1.push(chunk))
+      stream2.on('data', chunk => chunks2.push(chunk))
+
+      await Promise.all([done1, done2])
+
+      expect(Buffer.concat(chunks1)).toEqual(Buffer.concat([piece0, piece1]))
+      expect(Buffer.concat(chunks2)).toEqual(Buffer.from([3, 4, 5, 6]))
+      torrent.destroy()
+    })
+
+    test('destroy torrent destroys active streams', async () => {
+      const parsed = makeParsedTorrent()
+      const torrent = createTorrent(Buffer.from('fake'), {
+        parseTorrent: jest.fn().mockResolvedValue(parsed),
+      })
+
+      await new Promise(r => setTimeout(r, 0))
+
+      const stream = torrent.createReadStream()
+      torrent.destroy()
+
+      expect(stream.destroyed).toBe(true)
     })
   })
 })
