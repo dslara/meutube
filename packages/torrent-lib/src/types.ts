@@ -27,6 +27,8 @@ export interface TorrentEvents {
   error: (err: Error) => void
   download: (bytes: number) => void
   upload: (bytes: number) => void
+  peer: (peerId: string) => void
+  peerDisconnected: (peerId: string) => void
   [event: string]: (...args: any[]) => void
 }
 

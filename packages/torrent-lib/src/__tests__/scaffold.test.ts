@@ -18,8 +18,17 @@ describe('TorrentClient', () => {
 })
 
 describe('Torrent', () => {
+  const parseMagnet = (uri: string) => {
+    const m = uri.match(/xt=urn:btih:([a-f0-9]+)/i)
+    return { infoHash: m?.[1] ?? '', announce: [] }
+  }
+
   test('emits typed metadata event', () => {
-    const torrent = new Torrent('abc123')
+    const torrent = new Torrent('magnet:?xt=urn:btih:abc123', {
+      downloadDir: '/tmp/downloads',
+      peerId: '-MT0001-xxxxxxxxxxxx',
+      port: 6881,
+    }, { parseMagnet })
     let called = false
     torrent.on('metadata', () => {
       called = true
@@ -29,7 +38,11 @@ describe('Torrent', () => {
   })
 
   test('emits typed error event with Error payload', () => {
-    const torrent = new Torrent('abc123')
+    const torrent = new Torrent('magnet:?xt=urn:btih:abc123', {
+      downloadDir: '/tmp/downloads',
+      peerId: '-MT0001-xxxxxxxxxxxx',
+      port: 6881,
+    }, { parseMagnet })
     let receivedError: Error | null = null
     torrent.on('error', (err) => {
       receivedError = err
